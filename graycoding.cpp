@@ -1,5 +1,4 @@
 #include "graycoding.hpp"
-#include "utils.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -42,7 +41,15 @@ Mat1i grayToDec(InputArray _code_word)
 void codeword(const vector<string>& imlist, OutputArray _code_word)
 {
 	// Gruping images as pairs
-	vector<vector<string>> l = chunks(imlist, 2);
+	vector<vector<string>> l;
+	size_t length = imlist.size() / 2;
+	size_t begin = 0, end = 0;
+    for (int i = 0; i < length; i++)
+    {
+        end += 2;
+        l.push_back(vector<string>(imlist.begin() + begin, imlist.begin() + end));
+        begin = end;
+    }
 
 	// Read first image for output array size
 	Size sz = imread(l[0][0], 0).size();
