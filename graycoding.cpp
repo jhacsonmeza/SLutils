@@ -11,9 +11,10 @@ using namespace cv;
 Mat1i grayToDec(InputArray _code_word)
 {
 	Mat code_word = _code_word.getMat();
-	Mat1i dec(code_word.size[0], code_word.size[1], 0);
+	int n = code_word.size[0], h = code_word.size[1], w = code_word.size[2];
 
-	int h = code_word.size[0], w = code_word.size[1], n = code_word.size[2];
+	// array (init with zeros) to store graycode words converted to decimal
+	Mat1i dec(h, w, 0);
 
 	uchar* pcode_word = (uchar*)code_word.data;
 	int* pdec = (int*)dec.data;
@@ -44,7 +45,7 @@ void codeword(const vector<string>& imlist, OutputArray _code_word)
 	vector<vector<string>> l;
 	size_t length = imlist.size() / 2;
 	size_t begin = 0, end = 0;
-    for (int i = 0; i < length; i++)
+	for (int i = 0; i < length; i++)
     {
         end += 2;
         l.push_back(vector<string>(imlist.begin() + begin, imlist.begin() + end));
@@ -54,9 +55,9 @@ void codeword(const vector<string>& imlist, OutputArray _code_word)
 	// Read first image for output array size
 	Size sz = imread(l[0][0], 0).size();
 
-	// Setting output 3D array
+	// Setting output 3D array as (n,w,h) array with n graycode patterns of (w,h) size
 	int w = sz.width, h = sz.height;
-	int dims[] = { h, w, static_cast<int>(l.size()) };
+	int dims[] = { static_cast<int>(l.size()), h, w };
 	_code_word.create(3, dims, CV_8U);
 	Mat code_word = _code_word.getMat();
 
