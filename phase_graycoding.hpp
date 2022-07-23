@@ -5,6 +5,6 @@
 #include <vector>
 #include <string>
 
-void phaseGraycodingUnwrap(const std::vector<std::string>&, const std::vector<std::string>&, cv::OutputArray, int, int);
+void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps, const std::vector<std::string>& imlist_gc, cv::OutputArray _Phi, int p, int N);
 
 #endif
