@@ -1,5 +1,4 @@
-#ifndef GRAYCODING_HPP
-#define GRAYCODING_HPP
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 #include <vector>
@@ -13,5 +12,3 @@ void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray 
 //cv::Mat1i grayToDec(const std::vector<cv::Mat1b>&);
 //void codeword(const std::vector<std::string>&, std::vector<cv::Mat1b>&);
 //void decode(const std::vector<cv::Mat1b>&, std::vector<float>&, cv::InputArray);
-
-#endif
