@@ -1,10 +1,8 @@
 #include "phase_graycoding.hpp"
-#include "fringe_analysis.hpp"
-#include "graycoding.hpp"
 
-#include <opencv2/opencv.hpp>
-#include <vector>
-#include <string>
+#include "fringe_analysis.hpp" // NStepPhaseShifting
+#include "graycoding.hpp" // codeword, grayToDec
+
 #include <cmath>
 
 void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps, const std::vector<std::string>& imlist_gc,

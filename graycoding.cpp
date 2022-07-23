@@ -1,8 +1,5 @@
 #include "graycoding.hpp"
 
-#include <opencv2/opencv.hpp>
-#include <vector>
-#include <string>
 #include <cmath>
 
 cv::Mat1i grayToDec(cv::InputArray _code_word)

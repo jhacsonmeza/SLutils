@@ -1,9 +1,6 @@
 #include "fringe_analysis.hpp"
 
-#include <opencv2/opencv.hpp>
-#include <vector>
-#include <string>
-#include <cmath>
+#include <cmath> // std::atan2, std::sqrt
 
 void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N)
 {
