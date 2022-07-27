@@ -2,13 +2,13 @@
 
 #include <cmath>
 
-cv::Mat1i grayToDec(cv::InputArray _code_word)
+cv::Mat grayToDec(cv::InputArray _code_word)
 {
     cv::Mat code_word = _code_word.getMat();
     int n = code_word.size[0], h = code_word.size[1], w = code_word.size[2];
 
     // array (init with zeros) to store graycode words converted to decimal
-    cv::Mat1i dec(h, w, 0);
+    cv::Mat dec(h, w, CV_32S);
 
     uchar* pcode_word = code_word.data;
     int* pdec = dec.ptr<int>();
@@ -58,9 +58,9 @@ void codeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word
     uchar* pcode_word = code_word.data;
     for (int k = 0; k < l.size(); k++)
     {
-        cv::Mat1b im1 = cv::imread(l[k][0], 0);
-        cv::Mat1b im2 = cv::imread(l[k][1], 0);
-        cv::Mat1b bin = (im1 > im2) / 255;
+        cv::Mat im1 = cv::imread(l[k][0], 0);
+        cv::Mat im2 = cv::imread(l[k][1], 0);
+        cv::Mat bin = (im1 > im2) / 255;
         uchar* pbin = bin.data;
         for (int i = 0; i < h; i++)
             for (int j = 0; j < w; j++)
@@ -70,8 +70,8 @@ void codeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word
 
 void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask)
 {
-    cv::Mat1i dec = grayToDec(_code_word);
-    cv::Mat1b mask = _mask.getMat();
+    cv::Mat dec = grayToDec(_code_word); // int
+    cv::Mat mask = _mask.getMat();
     coor.reserve(cv::countNonZero(mask));
 
     uchar* pmask = mask.data;
