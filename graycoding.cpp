@@ -42,7 +42,7 @@ void codeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word
     for (int i = 0; i < length; i++)
     {
         end += 2;
-        l.push_back(std::vector<std::string>(imlist.begin() + begin, imlist.begin() + end));
+        l.push_back({imlist.begin() + begin, imlist.begin() + end});
         begin = end;
     }
 
