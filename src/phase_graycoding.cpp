@@ -1,7 +1,7 @@
-#include "phase_graycoding.hpp"
+#include <phase_unwrap/phase_graycoding.hpp>
 
-#include "fringe_analysis.hpp" // NStepPhaseShifting
-#include "graycoding.hpp" // codeword, grayToDec
+#include <phase_unwrap/fringe_analysis.hpp> // NStepPhaseShifting
+#include <phase_unwrap/graycoding.hpp> // codeword, grayToDec
 
 #include <cmath>
 

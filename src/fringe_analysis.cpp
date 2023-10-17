@@ -1,4 +1,4 @@
-#include "fringe_analysis.hpp"
+#include <phase_unwrap/fringe_analysis.hpp>
 
 #include <cmath> // std::atan2, std::sqrt
 
