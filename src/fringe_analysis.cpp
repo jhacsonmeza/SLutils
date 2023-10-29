@@ -44,4 +44,39 @@ void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArra
             pphase[i*w+j] = std::atan2(std::sqrt(3)*(I[0](i,j) - I[2](i,j)), 2*I[1](i,j) - I[0](i,j) - I[2](i,j));
 }
 
-//void modulation(cv::InputArray, cv::OutputArray, int);
+void modulation(const std::vector<std::string>& imgs, cv::OutputArray _data_modulation, int N)
+{
+    // Estimate init delta
+    double delta = 2*CV_PI/N;
+    // Read image and convert from uint8 to flating point
+    cv::Mat I = cv::imread(imgs[0], 0);
+    I.convertTo(I, CV_64F);
+    
+    // Initialize accum variables
+    cv::Mat sumI = I.clone();
+    cv::Mat sumIsin = I*std::sin(delta);
+    cv::Mat sumIcos = I*std::cos(delta);
+    
+    // Estimate the sums
+    for (int i = 1; i < imgs.size(); i++)
+    {
+        cv::Mat I = cv::imread(imgs[i], 0);
+        I.convertTo(I, CV_64F);
+        double delta = 2*CV_PI*(i + 1)/N;
+        
+        sumI += I;
+        sumIsin += I*std::sin(delta);
+        sumIcos += I*std::cos(delta);
+    }
+    
+    // Estimate DC component
+    cv::Mat dc_comp = sumI/N; // I'(x,y)
+    // Estimate intensity modulation
+    cv::Mat intensity_modu = sumIcos.mul(sumIcos) + sumIsin.mul(sumIsin);
+    cv::sqrt(intensity_modu, intensity_modu);
+    intensity_modu = intensity_modu/N; // I''(x,y) = sqrt(sumIcos^2 + sumIsin^2)/sumI
+    
+    // Estimate final data modulation
+    cv::Mat data_modu = intensity_modu/dc_comp;
+    _data_modulation.assign(data_modu);
+}

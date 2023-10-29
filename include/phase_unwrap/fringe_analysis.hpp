@@ -6,4 +6,4 @@
 
 void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N);
 void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase);
-//void modulation(cv::InputArray, cv::OutputArray, int);
+void modulation(const std::vector<std::string>& imgs, cv::OutputArray _data_modulation, int N);
