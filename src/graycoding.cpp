@@ -3,8 +3,74 @@
 #include <cmath>
 
 
-void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word)
-{
+void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
+    // Gruping images as pairs
+    std::vector<std::vector<std::string>> l;
+    size_t length = imlist.size() / 2;
+    size_t begin = 0, end = 0;
+    for (int i = 0; i < length; i++) {
+        end += 2;
+        l.push_back({imlist.begin() + begin, imlist.begin() + end});
+        begin = end;
+    }
+    // Total number of graycode bits (pairs of graycode captured patterns)
+    int n = l.size();
+    
+    
+    /* -----------------------------------------------------------------------
+    Initialize decimal array (phase order map) 
+    using the first pair of graycode images
+    ----------------------------------------------------------------------- */
+    cv::Mat im1 = cv::imread(l[0][0], 0);
+    cv::Mat im2 = cv::imread(l[0][1], 0);
+    cv::Mat gray = (im1 > im2)/255;
+    
+    // Create output array that stores graycode words converted to decimal
+    _dec.create(gray.size(), CV_32S);
+    cv::Mat dec = _dec.getMat();
+    
+    // Initialize decimal going from gray to bininary to decimal
+    // First binary value (MSB) is the same from gray
+    uchar* pgray = gray.data;
+    int* pdec = dec.ptr<int>();
+    for (size_t i = 0; i < gray.total(); i++)
+        pdec[i] = pgray[i] ? 1 << (n - 1) : 0;
+    
+    
+    /* -----------------------------------------------------------------------
+    Initializing the binary map, which is equal to the graycode map
+    because the Most Significant Bit (MSB) of the binary code = gray code MSB
+    -------------------------------------------------------------------------- */
+    cv::Mat bin = gray.clone();
+    uchar* pbin = bin.data;
+    
+    
+    /* -----------------------------------------------------------------------
+    Adding the rest of graycode patterns to estimate the final phase order
+    -------------------------------------------------------------------------- */
+    for (int k = 1; k < n; k++) {
+        // Read graycoding pattern and its inverted counterpart
+        cv::Mat im1 = cv::imread(l[k][0], 0);
+        cv::Mat im2 = cv::imread(l[k][1], 0);
+        // Generate a single gray map
+        cv::Mat gray = (im1 > im2) / 255;
+        uchar* pgray = gray.data;
+
+        for (size_t i = 0; i < gray.total(); i++) {
+            // Convert current gray code bit to binary bit using xor between 
+            // the previous binary bit and the current gray bit
+            // see: https://www.geeksforgeeks.org/gray-to-binary-and-binary-to-gray-conversion/
+            pbin[i] ^= pgray[i];
+            
+            // if binary bit is 1 then add 2^(bit_pos) to the decimal array
+            if (pbin[i]) pdec[i] += 1 << (n - k - 1);
+        }
+    }
+}
+
+
+
+void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word) {
     // Gruping images as pairs
     std::vector<std::vector<std::string>> l;
     size_t length = imlist.size() / 2;
@@ -40,8 +106,7 @@ void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_
 
 
 
-cv::Mat gray2dec(cv::InputArray _code_word)
-{
+cv::Mat gray2dec(cv::InputArray _code_word) {
     cv::Mat code_word = _code_word.getMat();
     int n = code_word.size[0], h = code_word.size[1], w = code_word.size[2];
 
@@ -83,8 +148,7 @@ cv::Mat gray2dec(cv::InputArray _code_word)
     return dec;
 }
 
-void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask)
-{
+void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask) {
     cv::Mat dec = gray2dec(_code_word); // int
     cv::Mat mask = _mask.getMat();
     coor.reserve(cv::countNonZero(mask));

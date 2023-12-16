@@ -1,23 +1,19 @@
 #include <phase_unwrap/phase_graycoding.hpp>
 
 #include <phase_unwrap/fringe_analysis.hpp> // NStepPhaseShifting
-#include <phase_unwrap/graycoding.hpp> // codeword, grayToDec
+#include <phase_unwrap/graycoding.hpp> // decimalMap
 
 #include <cmath>
 
 void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps, const std::vector<std::string>& imlist_gc,
-cv::OutputArray _Phi, int p, int N)
-{
+cv::OutputArray _Phi, int p, int N) {
     // Estimate wrapped phase map
     cv::Mat phi;
     NStepPhaseShifting(imlist_ps, phi, N);
 
-    // Estimate code words
-    cv::Mat code_word;
-    graycodeword(imlist_gc, code_word);
-
-    // Estimate fringe order with the codeword
-    cv::Mat k = gray2dec(code_word); // return int32 Mat
+    // Estimate decimal map (phase order) with the gray patterns
+    cv::Mat k;
+    decimalMap(imlist_gc, k);
     k.convertTo(k, CV_64F); // convert to double
 
     // Shift and rewrap wrapped phase
