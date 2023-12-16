@@ -14,10 +14,10 @@ cv::OutputArray _Phi, int p, int N)
 
     // Estimate code words
     cv::Mat code_word;
-    codeword(imlist_gc, code_word);
+    graycodeword(imlist_gc, code_word);
 
     // Estimate fringe order with the codeword
-    cv::Mat k = grayToDec(code_word); // return int32 Mat
+    cv::Mat k = gray2dec(code_word); // return int32 Mat
     k.convertTo(k, CV_64F); // convert to double
 
     // Shift and rewrap wrapped phase
