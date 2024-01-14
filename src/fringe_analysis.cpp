@@ -2,26 +2,28 @@
 
 #include <cmath> // std::atan2, std::sqrt
 
-void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N)
-{
-    double delta = 2 * CV_PI / N;
+void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N) {
+    // Initialize sumIsin and sumIcos with the first fringe image
     cv::Mat I = cv::imread(imgs[0], 0);
-    I.convertTo(I, CV_64F);
-    cv::Mat sumIsin = I * std::sin(delta);
-    cv::Mat sumIcos = I * std::cos(delta);
-
-    for (int i = 1; i < imgs.size(); i++)
-    {
+    I.convertTo(I, CV_64F); // convert image from uint8 to floating point
+    double delta = 2*CV_PI/N; // delta for i = 0
+    cv::Mat sumIsin = I*std::sin(delta);
+    cv::Mat sumIcos = I*std::cos(delta);
+    
+    // Add the other fringes to sumIsin and sumIcos
+    for (int i = 1; i < imgs.size(); i++) {
         cv::Mat I = cv::imread(imgs[i], 0);
         I.convertTo(I, CV_64F);
-        double delta = 2 * CV_PI * (i + 1) / N;
-        sumIsin += I * std::sin(delta);
-        sumIcos += I * std::cos(delta);
+        double delta = 2*CV_PI*(i + 1)/N;
+        sumIsin += I*std::sin(delta);
+        sumIcos += I*std::cos(delta);
     }
-
+    
+    // Set output wrapped phase array
     _phase.create(sumIsin.size(), sumIsin.type());
     cv::Mat phase = _phase.getMat();
-
+    
+    // Estimate final wrapped phase with atan2
     double* pphase = phase.ptr<double>();
     double* psumIsin = sumIsin.ptr<double>();
     double* psumIcos = sumIcos.ptr<double>();
@@ -29,37 +31,20 @@ void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _p
         pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
 }
 
-void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase)
-{
-    std::vector<cv::Mat1b> I(3);
-    for (int i = 0; i < 3; i++)
-        I[i] = cv::imread(imgs[i], 0);
-
-    _phase.create(I[0].size(), CV_64F);
-    cv::Mat phase = _phase.getMat();
-    double* pphase = phase.ptr<double>();
-    int w = phase.cols;
-    for (int i = 0; i < phase.rows; i++)
-        for (int j = 0; j < phase.cols; j++)
-            pphase[i*w+j] = std::atan2(std::sqrt(3)*(I[0](i,j) - I[2](i,j)), 2*I[1](i,j) - I[0](i,j) - I[2](i,j));
-}
-
-void modulation(const std::vector<std::string>& imgs, cv::OutputArray _data_modulation, int N)
-{
-    // Estimate init delta
-    double delta = 2*CV_PI/N;
-    // Read image and convert from uint8 to flating point
+void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+                                   cv::OutputArray _data_modulation, int N) {
+    // Initialize sumI, sumIsin, and sumIcos using the first fringe image
     cv::Mat I = cv::imread(imgs[0], 0);
-    I.convertTo(I, CV_64F);
+    I.convertTo(I, CV_64F); // convert image from uint8 to floating point
+    double delta = 2*CV_PI/N; // delta for i = 0
     
-    // Initialize accum variables
     cv::Mat sumI = I.clone();
     cv::Mat sumIsin = I*std::sin(delta);
     cv::Mat sumIcos = I*std::cos(delta);
     
-    // Estimate the sums
-    for (int i = 1; i < imgs.size(); i++)
-    {
+    
+    // Add the other fringes to sumI, sumIsin, and sumIcos
+    for (int i = 1; i < imgs.size(); i++) {
         cv::Mat I = cv::imread(imgs[i], 0);
         I.convertTo(I, CV_64F);
         double delta = 2*CV_PI*(i + 1)/N;
@@ -69,14 +54,85 @@ void modulation(const std::vector<std::string>& imgs, cv::OutputArray _data_modu
         sumIcos += I*std::cos(delta);
     }
     
-    // Estimate DC component
-    cv::Mat dc_comp = sumI/N; // I'(x,y)
-    // Estimate intensity modulation
+    // ------------- Estimate final wrapped phase with atan2
+    _phase.create(sumIsin.size(), sumIsin.type());
+    cv::Mat phase = _phase.getMat();
+    double* pphase = phase.ptr<double>();
+    double* psumIsin = sumIsin.ptr<double>();
+    double* psumIcos = sumIcos.ptr<double>();
+    for (int i = 0; i < sumIsin.total(); i++)
+        pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
+    
+    
+    
+    // Estimate DC component (or average intensity component)
+    cv::Mat average_intensity = sumI/N; // I'(x,y)
+    
+    // Estimate intensity modulation: sqrt(sumIcos^2 + sumIsin^2)/sumI
     cv::Mat intensity_modu = sumIcos.mul(sumIcos) + sumIsin.mul(sumIsin);
     cv::sqrt(intensity_modu, intensity_modu);
-    intensity_modu = intensity_modu/N; // I''(x,y) = sqrt(sumIcos^2 + sumIsin^2)/sumI
+    intensity_modu = intensity_modu/N; // I''(x,y)
     
-    // Estimate final data modulation
-    cv::Mat data_modu = intensity_modu/dc_comp;
-    _data_modulation.assign(data_modu);
+    // ----------- Estimate final data modulation: gamma(x,y) = I''(x,y)/I'(x,y)
+    cv::Mat data_modulation = intensity_modu/average_intensity;
+    _data_modulation.assign(data_modulation);
+}
+
+void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase) {
+    // Read the three fringe images
+    cv::Mat im1 = cv::imread(imgs[0], 0);
+    cv::Mat im2 = cv::imread(imgs[1], 0);
+    cv::Mat im3 = cv::imread(imgs[2], 0);
+    
+    // Set output wrapped phase array
+    _phase.create(im1.size(), CV_64F);
+    cv::Mat phase = _phase.getMat();
+    
+    // Estimate final wrapped phase with atan2
+    double* pphase = phase.ptr<double>();
+    uchar *pim1 = im1.data, *pim2 = im2.data, *pim3 = im3.data;
+    for (int i = 0; i < phase.total(); i++) {
+        double I1 = static_cast<double>(pim1[i]);
+        double I2 = static_cast<double>(pim2[i]);
+        double I3 = static_cast<double>(pim3[i]);
+        
+        pphase[i] = std::atan2(std::sqrt(3.)*(I1 - I3), 2*I2 - I1 - I3);
+    }
+}
+
+void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+                                       cv::OutputArray _data_modulation, int N) {
+    // Read the three fringe images
+    cv::Mat im1 = cv::imread(imgs[0], 0);
+    cv::Mat im2 = cv::imread(imgs[1], 0);
+    cv::Mat im3 = cv::imread(imgs[2], 0);
+    
+    
+    // Set output wrapped phase array
+    _phase.create(im1.size(), CV_64F);
+    cv::Mat phase = _phase.getMat();
+    
+    // Set output data modulation array
+    _data_modulation.create(im1.size(), CV_64F);
+    cv::Mat data_modulation = _data_modulation.getMat();
+    
+    
+    // Estimate final wrapped phase and data modulation arrays
+    double* pphase = phase.ptr<double>();
+    double* gamma = data_modulation.ptr<double>();
+    uchar *pim1 = im1.data, *pim2 = im2.data, *pim3 = im3.data;
+    for (int i = 0; i < phase.total(); i++) {
+        double I1 = static_cast<double>(pim1[i]);
+        double I2 = static_cast<double>(pim2[i]);
+        double I3 = static_cast<double>(pim3[i]);
+        
+        double num = std::sqrt(3.)*(I1 - I3);
+        double den = 2*I2 - I1 - I3;
+        
+        // Phase map
+        pphase[i] = std::atan2(num, den);
+        
+        // Data modulation
+        gamma[i] = std::sqrt(num*num + den*den)/(I1 + I2 + I3);
+    }
 }
