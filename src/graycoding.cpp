@@ -1,28 +1,22 @@
 #include <phase_unwrap/graycoding.hpp>
 
+#include <stdexcept> // std::runtime_error
 #include <cmath>
 
 
 void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
-    // Gruping images as pairs
-    std::vector<std::vector<std::string>> l;
-    size_t length = imlist.size() / 2;
-    size_t begin = 0, end = 0;
-    for (int i = 0; i < length; i++) {
-        end += 2;
-        l.push_back({imlist.begin() + begin, imlist.begin() + end});
-        begin = end;
-    }
-    // Total number of graycode bits (pairs of graycode captured patterns)
-    int n = l.size();
+    if (imlist.size() % 2 != 0)
+        throw std::runtime_error("decimalMap requires an even set of images\n");
     
+    // Total number of graycode bits (pairs of captured graycode patterns)
+    int n = imlist.size()/2;
     
     /* -----------------------------------------------------------------------
     Initialize decimal array (phase order map) 
     using the first pair of graycode images
     ----------------------------------------------------------------------- */
-    cv::Mat im1 = cv::imread(l[0][0], 0);
-    cv::Mat im2 = cv::imread(l[0][1], 0);
+    cv::Mat im1 = cv::imread(imlist[0], 0);
+    cv::Mat im2 = cv::imread(imlist[1], 0);
     cv::Mat gray = (im1 > im2)/255;
     
     // Create output array that stores graycode words converted to decimal
@@ -50,8 +44,8 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     -------------------------------------------------------------------------- */
     for (int k = 1; k < n; k++) {
         // Read graycoding pattern and its inverted counterpart
-        cv::Mat im1 = cv::imread(l[k][0], 0);
-        cv::Mat im2 = cv::imread(l[k][1], 0);
+        cv::Mat im1 = cv::imread(imlist[2*k], 0);
+        cv::Mat im2 = cv::imread(imlist[2*k+1], 0);
         // Generate a single gray map
         cv::Mat gray = (im1 > im2) / 255;
         uchar* pgray = gray.data;
@@ -71,30 +65,26 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
 
 
 void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word) {
-    // Gruping images as pairs
-    std::vector<std::vector<std::string>> l;
-    size_t length = imlist.size() / 2;
-    size_t begin = 0, end = 0;
-    for (int i = 0; i < length; i++) {
-        end += 2;
-        l.push_back({imlist.begin() + begin, imlist.begin() + end});
-        begin = end;
-    }
+    if (imlist.size() % 2 != 0)
+        throw std::runtime_error("graycodeword requires an even set of images\n");
+    
+    // Total number of graycode bits (pairs of captured graycode patterns)
+    int n = imlist.size()/2;
 
     // Read first image to estimate output array size
-    cv::Size sz = cv::imread(l[0][0], 0).size();
+    cv::Size sz = cv::imread(imlist[0], 0).size();
 
     // Setting output 3D array as (n,h,w) array with n graycode patterns of (h,w) size
     int w = sz.width, h = sz.height;
-    int dims[] = {static_cast<int>(l.size()), h, w};
+    int dims[] = {n, h, w};
     _code_word.create(3, dims, CV_8U);
     cv::Mat code_word = _code_word.getMat();
 
     // Estimating gray maps and adding them to the code_word 3D array
     uchar* pcode_word = code_word.data;
-    for (int k = 0; k < l.size(); k++) {
-        cv::Mat im1 = cv::imread(l[k][0], 0);
-        cv::Mat im2 = cv::imread(l[k][1], 0);
+    for (int k = 0; k < n; k++) {
+        cv::Mat im1 = cv::imread(imlist[2*k], 0);
+        cv::Mat im2 = cv::imread(imlist[2*k+1], 0);
         
         cv::Mat bin = (im1 > im2) / 255;
         uchar* pbin = bin.data;
