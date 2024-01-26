@@ -5,16 +5,17 @@
 
 #include <cmath>
 
-void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps, const std::vector<std::string>& imlist_gc,
-cv::OutputArray _Phi, int p, int N) {
+void sl::phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps,
+                               const std::vector<std::string>& imlist_gc,
+                               cv::OutputArray _Phi, int p, int N) {
     // Estimate wrapped phase map
     cv::Mat phi;
     NStepPhaseShifting(imlist_ps, phi, N);
-
+    
     // Estimate decimal map (phase order) with the gray patterns
     cv::Mat k;
     decimalMap(imlist_gc, k);
-    k.convertTo(k, CV_64F); // convert to double
+    k.convertTo(k, CV_64F); // convert to double*/
 
     // Shift and rewrap wrapped phase
     double shift = -CV_PI + CV_PI / p;

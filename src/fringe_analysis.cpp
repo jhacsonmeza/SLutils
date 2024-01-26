@@ -2,6 +2,9 @@
 
 #include <cmath> // std::atan2, std::sqrt
 
+
+namespace sl {
+
 void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N) {
     // Initialize sumIsin and sumIcos with the first fringe image
     cv::Mat I = cv::imread(imgs[0], 0);
@@ -62,7 +65,6 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     double* psumIcos = sumIcos.ptr<double>();
     for (int i = 0; i < sumIsin.total(); i++)
         pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
-    
     
     
     // Estimate DC component (or average intensity component)
@@ -136,3 +138,5 @@ void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv:
         gamma[i] = std::sqrt(num*num + den*den)/(I1 + I2 + I3);
     }
 }
+
+} // namespace sl

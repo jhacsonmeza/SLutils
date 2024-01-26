@@ -4,6 +4,8 @@
 #include <cmath>
 
 
+namespace sl {
+
 void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     if (imlist.size() % 2 != 0)
         throw std::runtime_error("decimalMap requires an even set of images\n");
@@ -149,3 +151,5 @@ void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray 
         if (pmask[i])
             coor.push_back(static_cast<float>(pdec[i]));
 }
+
+} // namespace sl
