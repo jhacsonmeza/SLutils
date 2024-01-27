@@ -15,6 +15,6 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
 void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase);
 
 void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
-                                       cv::OutputArray _data_modulation, int N);
+                                       cv::OutputArray _data_modulation);
 
 } // namespace sl

@@ -37,13 +37,12 @@ void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _p
 void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
                                    cv::OutputArray _data_modulation, int N) {
     // Initialize sumI, sumIsin, and sumIcos using the first fringe image
-    cv::Mat I = cv::imread(imgs[0], 0);
-    I.convertTo(I, CV_64F); // convert image from uint8 to floating point
+    cv::Mat sumI = cv::imread(imgs[0], 0); // In this case sumI = I_0
+    sumI.convertTo(sumI, CV_64F); // convert image from uint8 to floating point
     double delta = 2*CV_PI/N; // delta for i = 0
     
-    cv::Mat sumI = I.clone();
-    cv::Mat sumIsin = I*std::sin(delta);
-    cv::Mat sumIcos = I*std::cos(delta);
+    cv::Mat sumIsin = sumI*std::sin(delta);
+    cv::Mat sumIcos = sumI*std::cos(delta);
     
     
     // Add the other fringes to sumI, sumIsin, and sumIcos
@@ -66,17 +65,10 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     for (int i = 0; i < sumIsin.total(); i++)
         pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
     
-    
-    // Estimate DC component (or average intensity component)
-    cv::Mat average_intensity = sumI/N; // I'(x,y)
-    
-    // Estimate intensity modulation: sqrt(sumIcos^2 + sumIsin^2)/sumI
-    cv::Mat intensity_modu = sumIcos.mul(sumIcos) + sumIsin.mul(sumIsin);
-    cv::sqrt(intensity_modu, intensity_modu);
-    intensity_modu = intensity_modu/N; // I''(x,y)
-    
-    // ----------- Estimate final data modulation: gamma(x,y) = I''(x,y)/I'(x,y)
-    cv::Mat data_modulation = intensity_modu/average_intensity;
+    // ----------- Estimate data modulation: sqrt(sumIcos^2 + sumIsin^2)/sumI
+    cv::Mat numerator = sumIcos.mul(sumIcos) + sumIsin.mul(sumIsin);
+    cv::sqrt(numerator, numerator);
+    cv::Mat data_modulation = numerator/sumI;
     _data_modulation.assign(data_modulation);
 }
 
@@ -103,19 +95,18 @@ void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArra
 }
 
 void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
-                                       cv::OutputArray _data_modulation, int N) {
+                                       cv::OutputArray _data_modulation) {
     // Read the three fringe images
     cv::Mat im1 = cv::imread(imgs[0], 0);
     cv::Mat im2 = cv::imread(imgs[1], 0);
     cv::Mat im3 = cv::imread(imgs[2], 0);
-    
     
     // Set output wrapped phase array
     _phase.create(im1.size(), CV_64F);
     cv::Mat phase = _phase.getMat();
     
     // Set output data modulation array
-    _data_modulation.create(im1.size(), CV_64F);
+    _data_modulation.create(phase.size(), phase.type());
     cv::Mat data_modulation = _data_modulation.getMat();
     
     
