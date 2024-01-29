@@ -46,6 +46,7 @@ if(CMAKE_CUDA_COMPILER AND WITH_CUDA)
     set(PHASE_UNWRAP_SRC
         src/fringe_analysis.cu
         src/graycoding.cu
+        src/phase_graycoding.cu
     )
 else()
     message(STATUS "CUDA is not supported")
