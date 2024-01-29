@@ -1,7 +1,6 @@
 #include <phase_unwrap/graycoding.hpp>
 
 #include <stdexcept> // std::runtime_error
-#include <cmath>
 
 
 namespace sl {
@@ -64,8 +63,6 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     }
 }
 
-
-
 void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word) {
     if (imlist.size() % 2 != 0)
         throw std::runtime_error("graycodeword requires an even set of images\n");
@@ -96,14 +93,13 @@ void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_
     }
 }
 
-
-
-cv::Mat gray2dec(cv::InputArray _code_word) {
+void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec) {
     cv::Mat code_word = _code_word.getMat();
     int n = code_word.size[0], h = code_word.size[1], w = code_word.size[2];
 
-    // array (init with zeros) to store graycode words converted to decimal
-    cv::Mat dec(h, w, CV_32S);
+    // Output array (init with zeros) to store graycode words converted to decimal
+    _dec.create(h, w, CV_32S);
+    cv::Mat dec = _dec.getMat();
     // array to store graycode bits converted to binary
     cv::Mat bin(h, w, CV_8U);
     
@@ -135,13 +131,11 @@ cv::Mat gray2dec(cv::InputArray _code_word) {
             if (pbin[i]) pdec[i] += 1 << (n - k - 1);
         }
     }
-    
-
-    return dec;
 }
 
 void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask) {
-    cv::Mat dec = gray2dec(_code_word); // int
+    cv::Mat dec;
+    gray2dec(_code_word, dec); // int
     cv::Mat mask = _mask.getMat();
     coor.reserve(cv::countNonZero(mask));
 
