@@ -22,7 +22,7 @@ endif()
 
 
 # Options
-option(WITH_CUDA "Use CUDA version" ON)
+option(SLU_WITH_CUDA "Use CUDA version" ON)
 
 # Set C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -36,23 +36,23 @@ find_package(OpenCV REQUIRED)
 include(CheckLanguage)
 check_language(CUDA)
 
-if(CMAKE_CUDA_COMPILER AND WITH_CUDA)
+if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     enable_language(CUDA)
-    message(STATUS "Using CUDA!")
+    message(STATUS "Compiling CUDA version")
     
     # set CUDA C++17 standard
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     
-    set(SL_UNWRAP_SRC
+    set(SLU_SOURCES
         src/fringe_analysis.cu
         src/graycoding.cu
         src/phase_graycoding.cu
     )
 else()
-    message(STATUS "CUDA is not supported")
+    message(STATUS "Compiling CPU version")
     
-    set(SL_UNWRAP_SRC
+    set(SLU_SOURCES
         src/fringe_analysis.cpp
         src/graycoding.cpp
         src/phase_graycoding.cpp
@@ -61,7 +61,7 @@ endif()
 
 
 # Create static lib
-add_library(SLunwrap STATIC ${SL_UNWRAP_SRC})
+add_library(SLunwrap STATIC ${SLU_SOURCES})
 # Add include directories and link external libs
 target_include_directories(SLunwrap PUBLIC include)
 target_link_libraries(SLunwrap ${OpenCV_LIBS})
