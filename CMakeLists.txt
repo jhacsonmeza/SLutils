@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-# If not target architecture is provided, automatically detect it
+# If no target architecture is provided, automatically detect it
 if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES native)
 endif()
@@ -8,7 +8,7 @@ endif()
 project(structured_light_unwrapping LANGUAGES CXX)
 
 
-# Handle the FindCUDA removal policy change for OpenCV:
+# Handle FindCUDA removal policy, which is needed for OpenCV:
 # `Policy CMP0146 is not set: The FindCUDA module is removed.`
 if(POLICY CMP0146)
     cmake_policy(SET CMP0146 OLD)
@@ -38,7 +38,7 @@ check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     enable_language(CUDA)
-    message(STATUS "Compiling CUDA version")
+    message(STATUS "Compiling the CUDA version")
     
     # set CUDA C++17 standard
     set(CMAKE_CUDA_STANDARD 17)
@@ -50,12 +50,13 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
         src/phase_graycoding.cu
     )
 else()
-    message(STATUS "Compiling CPU version")
+    message(STATUS "Compiling the CPU version")
     
     set(SLU_SOURCES
         src/fringe_analysis.cpp
         src/graycoding.cpp
         src/phase_graycoding.cpp
+        src/centerline.cpp
     )
 endif()
 
