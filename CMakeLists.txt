@@ -40,6 +40,14 @@ check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     enable_language(CUDA)
+    
+    # Check if OpenCV has CUDA support
+    if(DEFINED OpenCV_CUDA_VERSION)
+        message(STATUS "OpenCV was built with CUDA version ${OpenCV_CUDA_VERSION}")
+    else()
+        message(FATAL_ERROR "OpenCV does not have CUDA support")
+    endif()
+    
     message(STATUS "Compiling the CUDA version")
     
     # Define HAVE_CUDA macro
