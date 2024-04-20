@@ -14,7 +14,7 @@ if(POLICY CMP0146)
     cmake_policy(SET CMP0146 OLD)
 endif()
 
-# Set default build type
+# If not specified, set build type to release
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Build type not specified - defaulting to Release")
     set(CMAKE_BUILD_TYPE Release)
@@ -22,7 +22,9 @@ endif()
 
 
 # Options
-option(SLU_WITH_CUDA "Use CUDA version" ON)
+option(SLU_WITH_CUDA "Build CUDA version" ON)
+option(SLU_BUILD_SAMPLES "Build phase unwrapping samples" OFF)
+
 
 # Set C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -39,6 +41,9 @@ check_language(CUDA)
 if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     enable_language(CUDA)
     message(STATUS "Compiling the CUDA version")
+    
+    # Define HAVE_CUDA macro
+    add_compile_definitions(HAVE_CUDA)
     
     # set CUDA C++17 standard
     set(CMAKE_CUDA_STANDARD 17)
@@ -66,3 +71,8 @@ add_library(SLunwrap STATIC ${SLU_SOURCES})
 # Add include directories and link external libs
 target_include_directories(SLunwrap PUBLIC include)
 target_link_libraries(SLunwrap ${OpenCV_LIBS})
+
+
+if(SLU_BUILD_SAMPLES)
+    add_subdirectory(samples)
+endif()
