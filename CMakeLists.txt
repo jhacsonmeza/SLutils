@@ -24,6 +24,7 @@ endif()
 # Options
 option(SLU_WITH_CUDA "Build CUDA version" ON)
 option(SLU_BUILD_SAMPLES "Build phase unwrapping samples" OFF)
+option(SLU_PYTHON_BINDINGS "Build Python bindings" OFF)
 
 
 # Set C++17 standard
@@ -34,13 +35,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenCV REQUIRED)
 
 
-# Use CheckLanguage to check if CUDA is enabled
+# Use CheckLanguage to check if CUDA is available
 include(CheckLanguage)
 check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
-    enable_language(CUDA)
-    
     # Check if OpenCV has CUDA support
     if(DEFINED OpenCV_CUDA_VERSION)
         message(STATUS "OpenCV was built with CUDA version ${OpenCV_CUDA_VERSION}")
@@ -48,7 +47,9 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
         message(FATAL_ERROR "OpenCV does not have CUDA support")
     endif()
     
-    message(STATUS "Compiling the CUDA version")
+    # Enable CUDA
+    enable_language(CUDA)
+    message(STATUS "Building the CUDA version")
     
     # Define HAVE_CUDA macro
     add_compile_definitions(HAVE_CUDA)
@@ -62,8 +63,10 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
         src/graycoding.cu
         src/phase_graycoding.cu
     )
+    
+    set(SLU_BINDINGS_SRC python/gpu_bindings.cpp)
 else()
-    message(STATUS "Compiling the CPU version")
+    message(STATUS "Building the CPU version")
     
     set(SLU_SOURCES
         src/fringe_analysis.cpp
@@ -71,6 +74,8 @@ else()
         src/phase_graycoding.cpp
         src/centerline.cpp
     )
+    
+    set(SLU_BINDINGS_SRC python/cpu_bindings.cpp)
 endif()
 
 
@@ -79,6 +84,22 @@ add_library(SLunwrap STATIC ${SLU_SOURCES})
 # Add include directories and link external libs
 target_include_directories(SLunwrap PUBLIC include)
 target_link_libraries(SLunwrap ${OpenCV_LIBS})
+# Enable PIC to avoid problems with the Python bindings
+set_property(TARGET SLunwrap PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+
+if(SLU_PYTHON_BINDINGS)
+    # Find Python
+    find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+    
+    if (Python_FOUND)
+        # Add nanobind
+        add_subdirectory(third_party/nanobind)
+        # Build bindings
+        nanobind_add_module(sl ${SLU_BINDINGS_SRC})
+        target_link_libraries(sl PRIVATE SLunwrap ${OpenCV_LIBS})
+    endif()
+endif()
 
 
 if(SLU_BUILD_SAMPLES)
