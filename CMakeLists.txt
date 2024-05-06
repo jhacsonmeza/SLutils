@@ -89,6 +89,15 @@ set_property(TARGET SLunwrap PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
 if(SLU_PYTHON_BINDINGS)
+    # Check if nanobind was properly cloned in third_party/
+    if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/nanobind/CMakeLists.txt")
+	    message(FATAL_ERROR
+		    "nanobind is missing. Python bindings cannot be built without it. "
+		    "You probably did not clone the project with \"--recursive\" flag. "
+		    "This can be fixed by calling \"git submodule update --init --recursive\"."
+	    )
+    endif()
+    
     # Find Python
     find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
     
