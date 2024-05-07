@@ -5,7 +5,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES native)
 endif()
 
-project(structured_light_unwrapping LANGUAGES CXX)
+project(structured_light_utils LANGUAGES CXX)
 
 
 # Handle FindCUDA removal policy, which is needed for OpenCV:
@@ -80,12 +80,12 @@ endif()
 
 
 # Create static lib
-add_library(SLunwrap STATIC ${SLU_SOURCES})
+add_library(SLutils STATIC ${SLU_SOURCES})
 # Add include directories and link external libs
-target_include_directories(SLunwrap PUBLIC include)
-target_link_libraries(SLunwrap ${OpenCV_LIBS})
+target_include_directories(SLutils PUBLIC include)
+target_link_libraries(SLutils ${OpenCV_LIBS})
 # Enable PIC to avoid problems with the Python bindings
-set_property(TARGET SLunwrap PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(SLutils PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 
 if(SLU_PYTHON_BINDINGS)
@@ -101,13 +101,13 @@ if(SLU_PYTHON_BINDINGS)
     # Find Python
     find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
     
-    if (Python_FOUND)
-        # Add nanobind
-        add_subdirectory(third_party/nanobind)
-        # Build bindings
-        nanobind_add_module(sl ${SLU_BINDINGS_SRC})
-        target_link_libraries(sl PRIVATE SLunwrap ${OpenCV_LIBS})
-    endif()
+    message(STATUS "Building SLutils Python bindings")
+    
+    # Add nanobind
+    add_subdirectory(third_party/nanobind)
+    # Build bindings
+    nanobind_add_module(sl ${SLU_BINDINGS_SRC})
+    target_link_libraries(sl PRIVATE SLutils ${OpenCV_LIBS})
 endif()
 
 
