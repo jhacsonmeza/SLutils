@@ -1,4 +1,4 @@
-#include <phase_unwrap/phase_graycoding.hpp>
+#include <SLutils/phase_graycoding.hpp>
 
 #include <iostream>
 #include <algorithm> // std::sort
@@ -27,20 +27,20 @@ int main(int argc, char* argv[]) {
      
     int N = 18, p = 18;
     std::vector<std::string> im_files_ps(im_files.begin(), im_files.begin() + N);
-	std::vector<std::string> im_files_gc(im_files.begin() + N, im_files.end());
+    std::vector<std::string> im_files_gc(im_files.begin() + N, im_files.end());
 
 #ifdef HAVE_CUDA
     std::cout<<"This example is running in CUDA\n\n";
     cv::cuda::GpuMat Phi_d;
-	sl::phaseGraycodingUnwrap(im_files_ps, im_files_gc, Phi_d, p, N);
-    
+    sl::phaseGraycodingUnwrap(im_files_ps, im_files_gc, Phi_d, p, N);
+
     // Move to CPU
     cv::Mat Phi;
     Phi_d.download(Phi);
 #else
     std::cout<<"This example is running in CPU\n\n";
-	cv::Mat Phi;
-	sl::phaseGraycodingUnwrap(im_files_ps, im_files_gc, Phi, p, N);
+    cv::Mat Phi;
+    sl::phaseGraycodingUnwrap(im_files_ps, im_files_gc, Phi, p, N);
 #endif
 
     
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
     try {
         // Normalize array to the range [0,1] for visualization
         cv::normalize(Phi, Phi, 0, 1, cv::NORM_MINMAX);
-        
-	    // Create and set window size
+
+        // Create and set window size
         cv::namedWindow("Absolute unwrapped phase map", cv::WINDOW_NORMAL);
         cv::resizeWindow("Absolute unwrapped phase map", 896, 717);
         // Show the image
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     catch (const cv::Exception& e) {
         std::cout<<"Unable to use cv::imshow, got the error: "<<e.what();
         std::cout<<"Saving the output unwrapped phase map as 'ps+gc_unwrapped_phase.png'\n\n";
-        
+
         // Convert float array to uint8
         Phi.convertTo(Phi, CV_8U, 255);
         // Write image

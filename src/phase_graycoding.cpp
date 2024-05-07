@@ -1,7 +1,7 @@
-#include <phase_unwrap/phase_graycoding.hpp>
+#include <SLutils/phase_graycoding.hpp>
 
-#include <phase_unwrap/fringe_analysis.hpp> // NStepPhaseShifting
-#include <phase_unwrap/graycoding.hpp> // decimalMap
+#include <SLutils/fringe_analysis.hpp> // NStepPhaseShifting
+#include <SLutils/graycoding.hpp> // decimalMap
 
 #include <cmath>
 

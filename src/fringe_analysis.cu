@@ -1,8 +1,6 @@
-#include <phase_unwrap/fringe_analysis.hpp>
+#include <SLutils/fringe_analysis.hpp>
 
-// #include <opencv2/core/cuda.hpp>
 #include <opencv2/cudaarithm.hpp>
-// #include <math.h> #include <math_functions.h>
 
 
 namespace sl {
@@ -28,13 +26,13 @@ __global__ void N_modulation(const cv::cuda::PtrStepSz<double> sumI,
     double a2 = sumIsin(i,j);
     
     // Estimate numerator: sqrt(sumIcos^2 + sumIsin^2)
-    double numerator = hypot(a1, a2);//sqrt(a1*a1 + a2*a2);
+    double numerator = hypot(a1, a2); // sqrt(a1*a1 + a2*a2);
     // Final data modulation: sqrt(sumIcos^2 + sumIsin^2)/sumI
     data_modulation(i,j) = numerator/sumI(i,j);
 }
 
-__global__ void three_phase(const cv::cuda::PtrStepSz<uchar> im1, const cv::cuda::PtrStep<uchar> im2,
-                            const cv::cuda::PtrStep<uchar> im3, cv::cuda::PtrStep<double> phi) {
+__global__ void three_phase(const cv::cuda::PtrStepSzb im1, const cv::cuda::PtrStepb im2,
+                            const cv::cuda::PtrStepb im3, cv::cuda::PtrStep<double> phi) {
     int j = blockIdx.x*blockDim.x + threadIdx.x;
     int i = blockIdx.y*blockDim.y + threadIdx.y;
     if (i >= im1.rows || j >= im1.cols) return;
@@ -49,9 +47,9 @@ __global__ void three_phase(const cv::cuda::PtrStepSz<uchar> im1, const cv::cuda
     phi(i,j) = atan2(y, x);
 }
 
-__global__ void three_phase_modulation(const cv::cuda::PtrStepSz<uchar> im1,
-                                       const cv::cuda::PtrStep<uchar> im2,
-                                       const cv::cuda::PtrStep<uchar> im3,
+__global__ void three_phase_modulation(const cv::cuda::PtrStepSzb im1,
+                                       const cv::cuda::PtrStepb im2,
+                                       const cv::cuda::PtrStepb im3,
                                        cv::cuda::PtrStep<double> phi, cv::cuda::PtrStep<double> gamma) {
     int j = blockIdx.x*blockDim.x + threadIdx.x;
     int i = blockIdx.y*blockDim.y + threadIdx.y;

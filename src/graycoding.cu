@@ -1,4 +1,4 @@
-#include <phase_unwrap/graycoding.hpp>
+#include <SLutils/graycoding.hpp>
 
 #include <opencv2/cudaarithm.hpp>
 #include <stdexcept> // std::runtime_error

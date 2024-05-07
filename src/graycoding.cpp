@@ -1,4 +1,4 @@
-#include <phase_unwrap/graycoding.hpp>
+#include <SLutils/graycoding.hpp>
 
 #include <stdexcept> // std::runtime_error
 
@@ -36,7 +36,7 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     Initializing the binary map, which is equal to the graycode map
     because the Most Significant Bit (MSB) of the binary code = gray code MSB
     -------------------------------------------------------------------------- */
-    cv::Mat bin = gray.clone();
+    cv::Mat bin = gray; // this not copy data but increases refcount
     uchar* pbin = bin.data;
     
     
