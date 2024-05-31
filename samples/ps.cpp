@@ -57,9 +57,9 @@ int main(int argc, char* argv[]) {
         cv::waitKey(0);
         cv::destroyAllWindows();
     }
-    catch (const cv::Exception& e) {
-        std::cout<<"Unable to use cv::imshow, got the error: "<<e.what();
-        std::cout<<"Saving the output wrapped phase map as 'ps_wrapped_phase.png'\n\n";
+    catch (const cv::Exception&) {
+        std::cout<<"Unable to use cv::imshow\n"
+        <<"Saving the output wrapped phase map as 'ps_wrapped_phase.png'\n\n";
 
         // Convert float array to uint8
         phi.convertTo(phi, CV_8U, 255);
@@ -83,9 +83,9 @@ int main(int argc, char* argv[]) {
         cv::waitKey(0);
         cv::destroyAllWindows();
     }
-    catch (const cv::Exception& e) {
-        std::cout<<"Unable to use cv::imshow, got the error: "<<e.what();
-        std::cout<<"Saving the output modulation map as 'ps_modulation.png'\n";
+    catch (const cv::Exception&) {
+        std::cout<<"Unable to use cv::imshow\n"
+        <<"Saving the output modulation map as 'ps_modulation.png'\n";
         
         // Convert float array to uint8
         modu.convertTo(modu, CV_8U, 255);
