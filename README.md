@@ -1,4 +1,4 @@
-# Structured Light Utils (SLutils)
+# SLutils: Structured Light Utils
 
 This is a collection of utilities implemented in C++ and CUDA of different structured light algorithms for camera-projector systems, with a strong focus on phase unwrapping. You can easily integrate SLutils into your projects for 3D reconstruction or calibration purposes. Many of the structured light techniques implemented in SLutils are described in the book [High-Speed 3D Imaging with Digital Fringe Projection Techniques](https://www.routledge.com/High-Speed-3D-Imaging-with-Digital-Fringe-Projection-Techniques/Zhang/p/book/9780367869724). Current methods supported in this library are:
 
@@ -19,13 +19,22 @@ For phase unwrapping:
 * Ninja (optional but recommended).
 * Python >= 3.8 (optional).
 
-This project requires a recent CMake version because it uses the automatic CUDA architecture detection introduced in version 3.24.
+This project requires a recent CMake version because it uses the automatic CUDA architecture detection which was introduced in version 3.24.
 
 You can install OpenCV with:
 ```bash
-sudo apt install libopencv-dev
+$ sudo apt install libopencv-dev
 ```
 However, consider that if you want to build the CUDA version of SLutils, you will need to build OpenCV from source with the CUDA modules because `libopencv-dev` does not have CUDA support.
+
+
+## 🌱 Getting started
+We provide two Colab notebooks where you can see how to build and run the code samples for both the CPU and CUDA versions of SLutils. You can also see how to build and use the Python bindings.
+
+| Description  | Notebook                                                                                                                                                            |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SLutils CPU  | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Lp2jpqY6sJoXJTW6PqDGkyMPSvb1HH6I?usp=sharing) |
+| SLutils CUDA | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1GRRrQgEIlqKxJ6sVRYQsSV_GFyfQf-Fl?usp=sharing) |
 
 
 ## 🛠️ Build from source
@@ -34,9 +43,9 @@ To build SLutils from source, first clone this repo:
 $ git clone --recursive https://github.com/jhacsonmeza/SLutils.git
 $ cd SLutils
 ```
-Please do not forget the `--recursive` flag, specially if you want to build the Python bindings, because this clones the submodule dependencies.
+Please do not forget the `--recursive` flag, specially if you want to build the Python bindings, because this also clones all the submodule dependencies.
 
-Now, create a build folder and configure the building process with CMake:
+Now, create a build directory and configure the building process with CMake:
 ```bash
 $ mkdir build && cd build
 $ cmake ..
@@ -55,9 +64,8 @@ $ cmake -DSLU_WITH_CUDA=OFF ..
 ```
 
 
-
 ## ⚙️ CMake options
-This is a full list of all the CMake options available and their default values.
+This is a full list of all the CMake options available, and their default values.
 
 | **Option**             | **Description**       | **Default** |
 |------------------------|-----------------------|-------------|
@@ -66,27 +74,36 @@ This is a full list of all the CMake options available and their default values.
 | `SLU_PYTHON_BINDINGS`  | Build Python bindings | `OFF`       |
 
 
+
 ## 💻 Code samples
-We provide some code samples to try out SLutils. By default these samples are not compiled. To build them together with the library you need to use the `SLU_BUILD_SAMPLES` option:
+We provide some code samples to try out SLutils. By default these samples are not compiled. To build them together with the library you need to enable the `SLU_BUILD_SAMPLES` option:
 
 ```bash
 $ cmake -DSLU_BUILD_SAMPLES=ON ..
 $ cmake --build .
 ```
 
-To run the sample codes, you first need to download the test dataset here. For the following instructions we will assume you placed the dataset inside the `SLutils/` directory and that you are in the `SLutils/build/` directory.
+To run the code samples, you first need to download the test datasets [here](https://www.dropbox.com/scl/fo/gx14kjicbg5gwp9v73w4t/AMn7t9-xjTirNwpRvg8A16U?rlkey=64mlf359giaz131dudl2alufg&e=1&st=cphl6lel&dl=0) and place it inside the `SLutils/` directory, or you can download it with the following commands:
+
+```bash
+SLutils$ wget -O datasets.zip https://www.dropbox.com/scl/fo/gx14kjicbg5gwp9v73w4t/AMn7t9-xjTirNwpRvg8A16U?rlkey=64mlf359giaz131dudl2alufg&e=1&st=cphl6lel&dl=1
+SLutils$ unzip -q datasets.zip -x /
+SLutils$ rm datasets.zip # delete the downloaded zip file
+```
+
+For the following instructions we will assume that you are in `SLutils/build` and that you already have the directory `SLutils/datasets`:
 
 * In `samples/ps.cpp` we provide a N-step Phase-Shifting (PS) example using the `NStepPhaseShifting_modulation` function, which in addition to the wrapped phase map, provides the data modulation map. Run it with:
     ```bash
-    SLutils/build$ ./samples/ps ../data/nPS
+    SLutils/build$ ./samples/ps ../datasets/nPS
     ```
-    where `../data/nPS` is the path to the images.
+    where `../datasets/nPS` is the path to the images. This will show the resulting maps in two different windows. Press any key to close the current window.
 
 * With `samples/ps+gc.cpp` you can use the phase-shifting + graycoding method, where fringe patterns are used to estimate a wrapped phase map and graycode patterns are used to estimate the fringe order for unwrapping. This method is implemented with the `phaseGraycodingUnwrap` function:
     ```bash
-    SLutils/build$ ./samples/ps_gc ../data/PS+GC
+    SLutils/build$ ./samples/ps_gc ../datasets/PS+GC
     ```
-    where `../data/PS+GC` is the path to the images.
+    where `../datasets/PS+GC` is the path to the images. You will see the output phase map in a windown.
 
 
 ## 🐍 Python bindings
