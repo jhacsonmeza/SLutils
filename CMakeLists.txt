@@ -8,8 +8,8 @@ endif()
 project(structured_light_utils LANGUAGES CXX)
 
 
-# Handle FindCUDA removal policy, which is needed for OpenCV:
-# `Policy CMP0146 is not set: The FindCUDA module is removed.`
+# Change the behavior of the FindCUDA removal policy to avoid the
+# warning `Policy CMP0146 is not set: The FindCUDA module is removed.`
 if(POLICY CMP0146)
     cmake_policy(SET CMP0146 OLD)
 endif()
@@ -23,7 +23,7 @@ endif()
 
 # Options
 option(SLU_WITH_CUDA "Build CUDA version" ON)
-option(SLU_BUILD_SAMPLES "Build phase unwrapping samples" OFF)
+option(SLU_BUILD_SAMPLES "Build code samples" OFF)
 option(SLU_PYTHON_BINDINGS "Build Python bindings" OFF)
 
 
@@ -49,7 +49,7 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     
     # Enable CUDA
     enable_language(CUDA)
-    message(STATUS "Building the CUDA version")
+    message(STATUS "Building SLutils CUDA version")
     
     # Define HAVE_CUDA macro
     add_compile_definitions(HAVE_CUDA)
@@ -66,7 +66,7 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
     
     set(SLU_BINDINGS_SRC python/gpu_bindings.cpp)
 else()
-    message(STATUS "Building the CPU version")
+    message(STATUS "Building SLutils CPU version")
     
     set(SLU_SOURCES
         src/fringe_analysis.cpp
@@ -105,9 +105,14 @@ if(SLU_PYTHON_BINDINGS)
     
     # Add nanobind
     add_subdirectory(third_party/nanobind)
-    # Build bindings
+    
     nanobind_add_module(sl ${SLU_BINDINGS_SRC})
     target_link_libraries(sl PRIVATE SLutils ${OpenCV_LIBS})
+    # Link against CUDA runtime only if we're building the CUDA bindings
+    if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        target_link_libraries(sl PRIVATE CUDA::cudart)
+    endif()
 endif()
 
 

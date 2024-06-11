@@ -3,6 +3,7 @@
 #include <SLutils/graycoding.hpp>
 #include <SLutils/phase_graycoding.hpp>
 
+#include <cuda_runtime.h>
 #include <opencv2/core/cuda.hpp>
 
 #include <vector>
@@ -109,15 +110,47 @@ nb::ndarray<nb::pytorch, int> bind_decimalMap(const std::vector<std::string>& im
         nb::dtype<int>(), nb::device::cuda::value};
 }
 
+nb::ndarray<nb::pytorch, uchar> bind_graycodeword(const std::vector<std::string>& imlist) {
+    // Run core function
+    std::vector<cv::cuda::GpuMat> code_word;
+    sl::graycodeword(imlist, code_word); // returns vector of uchar 2D arrays
+    
+    // Get output size
+    cv::cuda::GpuMat& graymap = code_word[0];
+    const size_t n = code_word.size(), h = graymap.rows, w = graymap.cols;
+    const int64_t stride = graymap.step1(); // stride (in number of elements and bytes)
+    
+    // Allocate linear block of memory for the output 3D tensor
+    uchar* data;
+    cudaMalloc(&data, n*h*stride); // byte block of memory
+    
+    // Copy values from each gray map to the linear block of memory
+    for (int i = 0; i < n; i++) {
+        const cv::cuda::GpuMat& graymap = code_word[i];
+        
+        // Because the arrays are uint8 the stride in num elems is equal to stride in bytes
+        cudaMemcpy2D(data + i*h*stride, stride, graymap.data, stride, w, h, cudaMemcpyDeviceToDevice);
+    }
+    
+    // Create capsule for the output numpy array
+    nb::capsule owner(data, [](void *p) noexcept {
+       cudaFree(p);
+    });
+    
+    return {data, {n, h, w}, owner, {stride*static_cast<int64_t>(h), stride, 1},
+        nb::dtype<uchar>(), nb::device::cuda::value};
+}
+
 nb::ndarray<nb::pytorch, int> bind_gray2dec(nb::ndarray<uchar, nb::ndim<3>, nb::device::cuda> _code_word) {
-    // Get size of the input array
+    // Get size and strides of the input array
     const size_t n = _code_word.shape(0), h = _code_word.shape(1), w = _code_word.shape(2);
+    const size_t stride0 = _code_word.stride(0), stride1 = _code_word.stride(1);
     
     // Create view of the input 3D array in the form of std::vector<cv::cuda::GpuMat>
     std::vector<cv::cuda::GpuMat> code_word(n);
     for (int i = 0; i < n; i++) {
-        uchar* p = _code_word.data() + i*w*h; // pointer to the i-th slide
-        code_word[i] = {static_cast<int>(h), static_cast<int>(w), CV_8U, p/*, _code_word.stride(1)*/};
+        uchar* p = _code_word.data() + i*stride0; // pointer to the i-th graycode map
+        code_word[i] = {static_cast<int>(h), static_cast<int>(w), CV_8U, p, stride1};
     }
     
     // Run core function
@@ -164,6 +197,7 @@ NB_MODULE(sl, m) {
     
     
     m.def("decimalMap", bind_decimalMap);
+    m.def("graycodeword", bind_graycodeword);
     m.def("gray2dec", bind_gray2dec);
     
     m.def("phaseGraycodingUnwrap", bind_phaseGraycodingUnwrap);
