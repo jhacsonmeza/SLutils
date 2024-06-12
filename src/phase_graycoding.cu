@@ -63,16 +63,16 @@ __global__ void removeSpikyNoise(cv::cuda::PtrStepSz<double> Phi) {
     Phi(i,j) -= 2*CV_PI*round( (Phi(i,j) - Phim)/2/CV_PI );
 }
 
-void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps,
-                           const std::vector<std::string>& imlist_gc,
+void phaseGraycodingUnwrap(const std::vector<std::string>& impaths_ps,
+                           const std::vector<std::string>& impaths_gc,
                            cv::OutputArray _Phi, int p, int N) {
     // Estimate wrapped phase map
     cv::cuda::GpuMat phi; // double mat
-    NStepPhaseShifting(imlist_ps, phi, N);
-
+    NStepPhaseShifting(impaths_ps, phi, N);
+    
     // Estimate decimal map (phase order) with the gray patterns
     cv::cuda::GpuMat k;
-    decimalMap(imlist_gc, k);
+    decimalMap(impaths_gc, k);
 
 
     // --- Phase unwrapping using the phase order map k

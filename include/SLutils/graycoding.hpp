@@ -7,9 +7,10 @@
 
 namespace sl {
 
-void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec);
-void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word);
-void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec);
-void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask);
+void decimalMap(const std::vector<std::string>& impaths, cv::OutputArray dec);
+
+void graycodeword(const std::vector<std::string>& impaths, cv::OutputArray code_word);
+
+void gray2dec(cv::InputArray code_word, cv::OutputArray dec);
 
 } // namespace sl

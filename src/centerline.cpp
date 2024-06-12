@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp> // cv::threshold
 
 #include <queue>
+#include <stdexcept> // std::runtime_error
 
 
 namespace sl {
@@ -12,8 +13,13 @@ cv::Point seedPoint(const std::string& fn_clx, const std::string& fn_cly, cv::In
     // Read center line images
     cv::Mat clx = cv::imread(fn_clx, 0);
     cv::Mat cly = cv::imread(fn_cly, 0);
+    if (clx.size != cly.size)
+        throw std::runtime_error("seedPoint: center line images must have the same size");
+
     // Get input mask
     cv::Mat mask = _mask.getMat();
+    if (mask.size != clx.size)
+        throw std::runtime_error("seedPoint: mask size must match center line image size");
     
     // Estimate vertical line
     cv::bitwise_and(clx, mask, clx);
@@ -56,16 +62,21 @@ void spatialUnwrap(cv::InputArray _phased, const cv::Point p0, cv::InputArray _m
     
     // Get input discontinuous phase map
     cv::Mat phased = _phased.getMat();
-    // Get a editable input mask
+    if (p0.x < 0 or p0.x >= phased.cols or p0.y < 0 or p0.y >= phased.rows)
+        throw std::runtime_error("spatialUnwrap: invalid seed point (out of image bounds)");
+    
+    // Get an editable input mask (copy of the original mask)
     cv::Mat mask;
     _mask.copyTo(mask);
+    if (phased.size != mask.size)
+        throw std::runtime_error("spatialUnwrap: mask and discontinuous phase map must have the same size");
     
     // Initialize output continuous phase map
     cv::Mat phasec = phased.clone();
     
     // Initialize a queue to store the unwrapped points
     std::queue<cv::Point> queue;
-    queue.push(p0);  // The first point is p0
+    queue.push(p0); // The first point is p0
     
     
     const double* pphased = phased.ptr<double>();
@@ -74,6 +85,8 @@ void spatialUnwrap(cv::InputArray _phased, const cv::Point p0, cv::InputArray _m
     
     // Remove p0 from the mask
     const int h = phased.rows, w = phased.cols;
+    if (!pmask[p0.y*w + p0.x])
+        throw std::runtime_error("spatialUnwrap: seed point isn't inside the mask");
     pmask[p0.y*w + p0.x] = 0;
     
     while (!queue.empty()) {
@@ -91,7 +104,7 @@ void spatialUnwrap(cv::InputArray _phased, const cv::Point p0, cv::InputArray _m
             const int px = p.x + xo[i];
             const int py = p.y + yo[i];
             
-            // Check if point is outisde the mask and image bounds to ignore it
+            // Check if point is outisde the mask or image bounds to ignore it
             if (py < 0 || py >= h || px < 0 || px >= w || !pmask[py*w + px]) continue;
             
             // Get wrapped phase value at the p's neighbor

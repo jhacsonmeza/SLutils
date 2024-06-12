@@ -5,19 +5,19 @@
 
 namespace sl {
 
-void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
-    if (imlist.size() % 2 != 0)
-        throw std::runtime_error("decimalMap requires an even set of images\n");
+void decimalMap(const std::vector<std::string>& impaths, cv::OutputArray _dec) {
+    if (impaths.size() > 1 and impaths.size() % 2 != 0)
+        throw std::runtime_error("decimalMap requires an even set of images");
     
     // Total number of graycode bits (pairs of captured graycode patterns)
-    int n = imlist.size()/2;
+    std::size_t n = impaths.size()/2;
     
     /* -----------------------------------------------------------------------
     Initialize decimal array (phase order map) 
     using the first pair of graycode images
     ----------------------------------------------------------------------- */
-    cv::Mat im1 = cv::imread(imlist[0], 0);
-    cv::Mat im2 = cv::imread(imlist[1], 0);
+    cv::Mat im1 = cv::imread(impaths[0], 0);
+    cv::Mat im2 = cv::imread(impaths[1], 0);
     cv::Mat gray = (im1 > im2)/255;
     
     // Create output array that stores graycode words converted to decimal
@@ -28,7 +28,7 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     // First binary value (MSB) is the same from gray
     uchar* pgray = gray.data;
     int* pdec = dec.ptr<int>();
-    for (size_t i = 0; i < gray.total(); i++)
+    for (std::size_t i = 0; i < gray.total(); i++)
         pdec[i] = pgray[i] ? 1 << (n - 1) : 0;
     
     
@@ -43,15 +43,15 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     /* -----------------------------------------------------------------------
     Adding the rest of graycode patterns to estimate the final phase order
     -------------------------------------------------------------------------- */
-    for (int k = 1; k < n; k++) {
+    for (std::size_t k = 1; k < n; k++) {
         // Read graycoding pattern and its inverted counterpart
-        cv::Mat im1 = cv::imread(imlist[2*k], 0);
-        cv::Mat im2 = cv::imread(imlist[2*k+1], 0);
+        cv::Mat im1 = cv::imread(impaths[2*k], 0);
+        cv::Mat im2 = cv::imread(impaths[2*k+1], 0);
         // Generate a single gray map
         cv::Mat gray = (im1 > im2) / 255;
         uchar* pgray = gray.data;
 
-        for (size_t i = 0; i < gray.total(); i++) {
+        for (std::size_t i = 0; i < gray.total(); i++) {
             // Convert current gray code bit to binary bit using xor between 
             // the previous binary bit and the current gray bit
             // see: https://www.geeksforgeeks.org/gray-to-binary-and-binary-to-gray-conversion/
@@ -63,15 +63,15 @@ void decimalMap(const std::vector<std::string>& imlist, cv::OutputArray _dec) {
     }
 }
 
-void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_word) {
-    if (imlist.size() % 2 != 0)
-        throw std::runtime_error("graycodeword requires an even set of images\n");
+void graycodeword(const std::vector<std::string>& impaths, cv::OutputArray _code_word) {
+    if (impaths.size() > 1 and impaths.size() % 2 != 0)
+        throw std::runtime_error("graycodeword requires an even set of images");
     
     // Total number of graycode bits (pairs of captured graycode patterns)
-    int n = imlist.size()/2;
+    int n = impaths.size()/2;
 
     // Read first image to estimate output array size
-    cv::Size sz = cv::imread(imlist[0], 0).size();
+    cv::Size sz = cv::imread(impaths[0], 0).size();
 
     // Setting output 3D array as (n,h,w) array with n graycode patterns of (h,w) size
     int w = sz.width, h = sz.height;
@@ -82,8 +82,8 @@ void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_
     // Estimating gray maps and adding them to the code_word 3D array
     uchar* pcode_word = code_word.data;
     for (int k = 0; k < n; k++) {
-        cv::Mat im1 = cv::imread(imlist[2*k], 0);
-        cv::Mat im2 = cv::imread(imlist[2*k+1], 0);
+        cv::Mat im1 = cv::imread(impaths[2*k], 0);
+        cv::Mat im2 = cv::imread(impaths[2*k+1], 0);
         
         cv::Mat bin = (im1 > im2) / 255;
         uchar* pbin = bin.data;
@@ -94,6 +94,9 @@ void graycodeword(const std::vector<std::string>& imlist, cv::OutputArray _code_
 }
 
 void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec) {
+    if (_code_word.dims() != 3)
+        throw std::runtime_error("gray2dec: code_word must be a 3D array");
+
     cv::Mat code_word = _code_word.getMat();
     int n = code_word.size[0], h = code_word.size[1], w = code_word.size[2];
 
@@ -111,7 +114,7 @@ void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec) {
     int* pdec = dec.ptr<int>();
     uchar* pbin = bin.data;
     uchar* pcode_word = code_word.data;
-    for (size_t i = 0; i < dec.total(); i++) {
+    for (std::size_t i = 0; i < dec.total(); i++) {
         uchar graybit = pcode_word[i];
         pdec[i] = graybit ? 1 << (n - 1) : 0;
         pbin[i] = graybit;
@@ -121,7 +124,7 @@ void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec) {
     Adding the rest of graycode patterns to estimate the final phase order
     -------------------------------------------------------------------------- */
     for (int k = 1; k < n; k++) {
-        for (size_t i = 0; i < dec.total(); i++) {
+        for (std::size_t i = 0; i < dec.total(); i++) {
             // Convert current gray code bit to binary bit using xor between 
             // the previous binary bit and the current gray bit
             // see: https://www.geeksforgeeks.org/gray-to-binary-and-binary-to-gray-conversion/
@@ -131,19 +134,6 @@ void gray2dec(cv::InputArray _code_word, cv::OutputArray _dec) {
             if (pbin[i]) pdec[i] += 1 << (n - k - 1);
         }
     }
-}
-
-void decode(cv::InputArray _code_word, std::vector<float>& coor, cv::InputArray _mask) {
-    cv::Mat dec;
-    gray2dec(_code_word, dec); // int
-    cv::Mat mask = _mask.getMat();
-    coor.reserve(cv::countNonZero(mask));
-
-    uchar* pmask = mask.data;
-    int* pdec = dec.ptr<int>();
-    for (int i = 0; i < mask.total(); i++)
-        if (pmask[i])
-            coor.push_back(static_cast<float>(pdec[i]));
 }
 
 } // namespace sl

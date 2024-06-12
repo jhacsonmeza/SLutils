@@ -2,6 +2,8 @@
 
 #include <opencv2/cudaarithm.hpp>
 
+#include <stdexcept> // std::runtime_error
+
 
 namespace sl {
 
@@ -71,11 +73,14 @@ __global__ void three_phase_modulation(const cv::cuda::PtrStepSzb im1,
 }
 
 
-void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N) {
+void NStepPhaseShifting(const std::vector<std::string>& impaths, cv::OutputArray _phase, int N) {
+    if (impaths.size() < 3)
+        throw std::runtime_error("NStepPhaseShifting needs at least 3 fringe patterns");
+
     cv::cuda::Stream stream0;
 
     // Initialize sumIsin and sumIcos with the first fringe image
-    cv::Mat I_h = cv::imread(imgs[0], 0);
+    cv::Mat I_h = cv::imread(impaths[0], 0);
     I_h.convertTo(I_h, CV_64F);
     cv::cuda::GpuMat I(I_h);
     double delta = 2*CV_PI/N; // delta for i = 0
@@ -88,8 +93,8 @@ void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _p
     
     
     // Add the other fringes to sumIsin and sumIcos
-    for (int i = 1; i < imgs.size(); i++) {
-        cv::Mat I_h = cv::imread(imgs[i], 0);
+    for (std::size_t i = 1; i < impaths.size(); i++) {
+        cv::Mat I_h = cv::imread(impaths[i], 0);
         I_h.convertTo(I_h, CV_64F);
         cv::cuda::GpuMat I(I_h);
         double delta = 2*CV_PI*(i + 1)/N;
@@ -108,12 +113,15 @@ void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _p
     N_phase<<<grid, block>>>(sumIcos, sumIsin, phase);
 }
 
-void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+void NStepPhaseShifting_modulation(const std::vector<std::string>& impaths, cv::OutputArray _phase,
                                    cv::OutputArray _data_modulation, int N) {
+    if (impaths.size() < 3)
+        throw std::runtime_error("NStepPhaseShifting_modulation needs at least 3 fringe patterns");
+
     cv::cuda::Stream stream0;
 
     // Initialize sumI, sumIsin, and sumIcos using the first fringe image
-    cv::Mat sumI_h = cv::imread(imgs[0], 0);
+    cv::Mat sumI_h = cv::imread(impaths[0], 0);
     sumI_h.convertTo(sumI_h, CV_64F);
     cv::cuda::GpuMat sumI(sumI_h);
     double delta = 2*CV_PI/N; // delta for i = 0
@@ -126,8 +134,8 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     
     
     // Add the other fringes to sumI, sumIsin, and sumIcos
-    for (int i = 1; i < imgs.size(); i++) {
-        cv::Mat I_h = cv::imread(imgs[i], 0);
+    for (std::size_t i = 1; i < impaths.size(); i++) {
+        cv::Mat I_h = cv::imread(impaths[i], 0);
         I_h.convertTo(I_h, CV_64F);
         cv::cuda::GpuMat I(I_h);
         double delta = 2*CV_PI*(i + 1)/N;
@@ -154,19 +162,22 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     cv::cuda::divide(numerator, sumI, _data_modulation, 1, -1, stream0);
 }
 
-void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase) {
+void ThreeStepPhaseShifting(const std::vector<std::string>& impaths, cv::OutputArray _phase) {
+    if (impaths.size() != 3)
+        throw std::runtime_error("ThreeStepPhaseShifting needs exactly 3 fringe patterns");
+
     cv::cuda::Stream stream0;
     
     // Read the three fringe images
     cv::cuda::GpuMat im1, im2, im3;
     
-    cv::Mat im1_h = cv::imread(imgs[0], 0);
+    cv::Mat im1_h = cv::imread(impaths[0], 0);
     im1.upload(im1_h, stream0);
     
-    cv::Mat im2_h = cv::imread(imgs[1], 0);
+    cv::Mat im2_h = cv::imread(impaths[1], 0);
     im2.upload(im2_h, stream0);
     
-    cv::Mat im3_h = cv::imread(imgs[2], 0);
+    cv::Mat im3_h = cv::imread(impaths[2], 0);
     im3.upload(im3_h, stream0);
     
     
@@ -180,20 +191,23 @@ void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArra
     three_phase<<<grid, block>>>(im1, im2, im3, phase);
 }
 
-void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& impaths, cv::OutputArray _phase,
                                        cv::OutputArray _data_modulation) {
+    if (impaths.size() != 3)
+        throw std::runtime_error("ThreeStepPhaseShifting_modulation needs exactly 3 fringe patterns");
+
     cv::cuda::Stream stream0;
     
     // Read the three fringe images
     cv::cuda::GpuMat im1, im2, im3;
     
-    cv::Mat im1_h = cv::imread(imgs[0], 0);
+    cv::Mat im1_h = cv::imread(impaths[0], 0);
     im1.upload(im1_h, stream0);
     
-    cv::Mat im2_h = cv::imread(imgs[1], 0);
+    cv::Mat im2_h = cv::imread(impaths[1], 0);
     im2.upload(im2_h, stream0);
     
-    cv::Mat im3_h = cv::imread(imgs[2], 0);
+    cv::Mat im3_h = cv::imread(impaths[2], 0);
     im3.upload(im3_h, stream0);
     
     

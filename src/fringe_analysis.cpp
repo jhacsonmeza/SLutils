@@ -1,21 +1,25 @@
 #include <SLutils/fringe_analysis.hpp>
 
 #include <cmath> // std::atan2, std::sqrt
+#include <stdexcept> // std::runtime_error
 
 
 namespace sl {
 
-void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase, int N) {
+void NStepPhaseShifting(const std::vector<std::string>& impaths, cv::OutputArray _phase, int N) {
+    if (impaths.size() < 3)
+        throw std::runtime_error("NStepPhaseShifting needs at least 3 fringe patterns");
+
     // Initialize sumIsin and sumIcos with the first fringe image
-    cv::Mat I = cv::imread(imgs[0], 0);
+    cv::Mat I = cv::imread(impaths[0], 0);
     I.convertTo(I, CV_64F); // convert image from uint8 to floating point
     double delta = 2*CV_PI/N; // delta for i = 0
     cv::Mat sumIsin = I*std::sin(delta);
     cv::Mat sumIcos = I*std::cos(delta);
     
     // Add the other fringes to sumIsin and sumIcos
-    for (int i = 1; i < imgs.size(); i++) {
-        cv::Mat I = cv::imread(imgs[i], 0);
+    for (std::size_t i = 1; i < impaths.size(); i++) {
+        cv::Mat I = cv::imread(impaths[i], 0);
         I.convertTo(I, CV_64F);
         double delta = 2*CV_PI*(i + 1)/N;
         sumIsin += I*std::sin(delta);
@@ -30,14 +34,17 @@ void NStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _p
     double* pphase = phase.ptr<double>();
     double* psumIsin = sumIsin.ptr<double>();
     double* psumIcos = sumIcos.ptr<double>();
-    for (int i = 0; i < sumIsin.total(); i++)
+    for (std::size_t i = 0; i < sumIsin.total(); i++)
         pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
 }
 
-void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+void NStepPhaseShifting_modulation(const std::vector<std::string>& impaths, cv::OutputArray _phase,
                                    cv::OutputArray _data_modulation, int N) {
+    if (impaths.size() < 3)
+        throw std::runtime_error("NStepPhaseShifting_modulation needs at least 3 fringe patterns");
+    
     // Initialize sumI, sumIsin, and sumIcos using the first fringe image
-    cv::Mat sumI = cv::imread(imgs[0], 0); // In this case sumI = I_0
+    cv::Mat sumI = cv::imread(impaths[0], 0); // In this case sumI = I_0
     sumI.convertTo(sumI, CV_64F); // convert image from uint8 to floating point
     double delta = 2*CV_PI/N; // delta for i = 0
     
@@ -46,8 +53,8 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     
     
     // Add the other fringes to sumI, sumIsin, and sumIcos
-    for (int i = 1; i < imgs.size(); i++) {
-        cv::Mat I = cv::imread(imgs[i], 0);
+    for (std::size_t i = 1; i < impaths.size(); i++) {
+        cv::Mat I = cv::imread(impaths[i], 0);
         I.convertTo(I, CV_64F);
         double delta = 2*CV_PI*(i + 1)/N;
         
@@ -62,7 +69,7 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     double* pphase = phase.ptr<double>();
     double* psumIsin = sumIsin.ptr<double>();
     double* psumIcos = sumIcos.ptr<double>();
-    for (int i = 0; i < sumIsin.total(); i++)
+    for (std::size_t i = 0; i < sumIsin.total(); i++)
         pphase[i] = -std::atan2(psumIsin[i], psumIcos[i]);
     
     // ----------- Estimate data modulation: sqrt(sumIcos^2 + sumIsin^2)/sumI
@@ -72,11 +79,14 @@ void NStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::Out
     _data_modulation.assign(data_modulation);
 }
 
-void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArray _phase) {
+void ThreeStepPhaseShifting(const std::vector<std::string>& impaths, cv::OutputArray _phase) {
+    if (impaths.size() != 3)
+        throw std::runtime_error("ThreeStepPhaseShifting needs exactly 3 fringe patterns");
+    
     // Read the three fringe images
-    cv::Mat im1 = cv::imread(imgs[0], 0);
-    cv::Mat im2 = cv::imread(imgs[1], 0);
-    cv::Mat im3 = cv::imread(imgs[2], 0);
+    cv::Mat im1 = cv::imread(impaths[0], 0);
+    cv::Mat im2 = cv::imread(impaths[1], 0);
+    cv::Mat im3 = cv::imread(impaths[2], 0);
     
     // Set output wrapped phase array
     _phase.create(im1.size(), CV_64F);
@@ -85,7 +95,7 @@ void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArra
     // Estimate final wrapped phase with atan2
     double* pphase = phase.ptr<double>();
     uchar *pim1 = im1.data, *pim2 = im2.data, *pim3 = im3.data;
-    for (int i = 0; i < phase.total(); i++) {
+    for (std::size_t i = 0; i < phase.total(); i++) {
         double I1 = static_cast<double>(pim1[i]);
         double I2 = static_cast<double>(pim2[i]);
         double I3 = static_cast<double>(pim3[i]);
@@ -94,12 +104,15 @@ void ThreeStepPhaseShifting(const std::vector<std::string>& imgs, cv::OutputArra
     }
 }
 
-void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv::OutputArray _phase,
+void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& impaths, cv::OutputArray _phase,
                                        cv::OutputArray _data_modulation) {
+    if (impaths.size() != 3)
+        throw std::runtime_error("ThreeStepPhaseShifting_modulation needs exactly 3 fringe patterns");
+    
     // Read the three fringe images
-    cv::Mat im1 = cv::imread(imgs[0], 0);
-    cv::Mat im2 = cv::imread(imgs[1], 0);
-    cv::Mat im3 = cv::imread(imgs[2], 0);
+    cv::Mat im1 = cv::imread(impaths[0], 0);
+    cv::Mat im2 = cv::imread(impaths[1], 0);
+    cv::Mat im3 = cv::imread(impaths[2], 0);
     
     // Set output wrapped phase array
     _phase.create(im1.size(), CV_64F);
@@ -114,7 +127,7 @@ void ThreeStepPhaseShifting_modulation(const std::vector<std::string>& imgs, cv:
     double* pphase = phase.ptr<double>();
     double* gamma = data_modulation.ptr<double>();
     uchar *pim1 = im1.data, *pim2 = im2.data, *pim3 = im3.data;
-    for (int i = 0; i < phase.total(); i++) {
+    for (std::size_t i = 0; i < phase.total(); i++) {
         double I1 = static_cast<double>(pim1[i]);
         double I2 = static_cast<double>(pim2[i]);
         double I3 = static_cast<double>(pim3[i]);

@@ -5,28 +5,28 @@
 
 #include <cmath>
 
-void sl::phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps,
-                               const std::vector<std::string>& imlist_gc,
+void sl::phaseGraycodingUnwrap(const std::vector<std::string>& impaths_ps,
+                               const std::vector<std::string>& impaths_gc,
                                cv::OutputArray _Phi, int p, int N) {
     // Estimate wrapped phase map
     cv::Mat phi;
-    NStepPhaseShifting(imlist_ps, phi, N);
+    NStepPhaseShifting(impaths_ps, phi, N);
     
     // Estimate decimal map (phase order) with the gray patterns
     cv::Mat k;
-    decimalMap(imlist_gc, k);
-    k.convertTo(k, CV_64F); // convert to double*/
+    decimalMap(impaths_gc, k);
+    k.convertTo(k, CV_64F); // convert to double
 
     // Shift and rewrap wrapped phase
-    double shift = -CV_PI + CV_PI / p;
+    double shift = -CV_PI + CV_PI/p;
     double* phid = phi.ptr<double>();
-    for (int i = 0; i < phi.total(); i++)
+    for (std::size_t i = 0; i < phi.total(); i++)
         phid[i] = std::atan2(std::sin(phid[i] + shift), std::cos(phid[i] + shift));
 
     // Estimate absolute phase map
-    _Phi.create(phi.size(), CV_64F);
+    _Phi.create(phi.size(), phi.type());
     cv::Mat Phi = _Phi.getMat();
-    Phi = phi + 2 * CV_PI * k;
+    Phi = phi + 2*CV_PI*k;
 
     // Shift phase back to the original values
     Phi -= shift;
@@ -38,6 +38,6 @@ void sl::phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps,
 
     double* pPhi = Phi.ptr<double>();
     float* pPhim = Phim.ptr<float>();
-    for (int i = 0; i < Phi.total(); i++)
+    for (std::size_t i = 0; i < Phi.total(); i++)
         pPhi[i] -= 2 * CV_PI * cvRound((pPhi[i] - pPhim[i]) / 2 / CV_PI);
 }

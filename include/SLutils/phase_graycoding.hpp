@@ -7,8 +7,8 @@
 
 namespace sl {
 
-void phaseGraycodingUnwrap(const std::vector<std::string>& imlist_ps,
-                           const std::vector<std::string>& imlist_gc,
-                           cv::OutputArray _Phi, int p, int N);
+void phaseGraycodingUnwrap(const std::vector<std::string>& impaths_ps,
+                           const std::vector<std::string>& impaths_gc,
+                           cv::OutputArray Phi, int p, int N);
 
 } // namespace sl
