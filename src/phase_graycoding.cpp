@@ -20,8 +20,10 @@ void sl::phaseGraycodingUnwrap(const std::vector<std::string>& impaths_ps,
     // Shift and rewrap wrapped phase
     double shift = -CV_PI + CV_PI/p;
     double* phid = phi.ptr<double>();
-    for (std::size_t i = 0; i < phi.total(); i++)
-        phid[i] = std::atan2(std::sin(phid[i] + shift), std::cos(phid[i] + shift));
+    for (std::size_t i = 0; i < phi.total(); i++) {
+        double phi_shift = phid[i] + shift; // shifted phase value
+        phid[i] = std::atan2(std::sin(phi_shift), std::cos(phi_shift));
+    }
 
     // Estimate absolute phase map
     _Phi.create(phi.size(), phi.type());
@@ -38,6 +40,14 @@ void sl::phaseGraycodingUnwrap(const std::vector<std::string>& impaths_ps,
 
     double* pPhi = Phi.ptr<double>();
     float* pPhim = Phim.ptr<float>();
-    for (std::size_t i = 0; i < Phi.total(); i++)
-        pPhi[i] -= 2 * CV_PI * cvRound((pPhi[i] - pPhim[i]) / 2 / CV_PI);
+    for (std::size_t i = 0; i < Phi.total(); i++) {        
+        // Estimate phase order difference between phase and filtered phase
+        double n = (pPhi[i] - pPhim[i])/2/CV_PI;
+        // Estimate 2*pi multiple to remove the spike (rounding n to nearest int)
+        // For pixels with no spikes rounded n must be 0 and no offset is applied
+        double offset = 2*CV_PI*cvRound(n);
+        
+        // Correct phase value
+        pPhi[i] -= offset;
+    }
 }
