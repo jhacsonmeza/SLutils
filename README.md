@@ -9,6 +9,7 @@ For phase measurement (wrapped phase estimation):
 For phase unwrapping:
 * Center line method (using spatial phase unwrapping).
 * Phase-shifting + graycoding method.
+* Multifrequency phase-shifting algorithm.
 
 
 ## ✅ Requirements
