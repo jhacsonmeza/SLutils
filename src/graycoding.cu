@@ -14,6 +14,25 @@ __global__ void initDecimalArray(const cv::cuda::PtrStepSzb gray, cv::cuda::PtrS
     decimal(i,j) = gray(i,j) ? 1 << (n_bits - 1) : 0;
 }
 
+__global__ void initDecimalAndBinary(const cv::cuda::PtrStepSzb im1, const cv::cuda::PtrStepSzb im2,
+                                     cv::cuda::PtrStepi decimal, cv::cuda::PtrStepb bin, int n_bits) {
+    int j = blockIdx.x*blockDim.x + threadIdx.x;
+    int i = blockIdx.y*blockDim.y + threadIdx.y;
+    if (i >= im1.rows || j >= im1.cols) return;
+    
+    // Get graycode bit
+    uchar graybit = im1(i,j) > im2(i,j);
+    
+    /* -----------------------------------------------------------------------
+    Initializing the binary map, which is equal to the graycode map
+    because the Most Significant Bit (MSB) of the binary code = MSB gray code
+    -------------------------------------------------------------------------- */
+    bin(i,j) = graybit;
+    
+    // Convert to decimal
+    decimal(i,j) = graybit ? 1 << (n_bits - 1) : 0;
+}
+
 __global__ void gray2dec_array(const cv::cuda::PtrStepSzb gray, cv::cuda::PtrStepb bin,
                                cv::cuda::PtrStepi decimal, int n_bits, int pos) {
     int j = blockIdx.x*blockDim.x + threadIdx.x;
@@ -24,6 +43,23 @@ __global__ void gray2dec_array(const cv::cuda::PtrStepSzb gray, cv::cuda::PtrSte
     // the previous binary bit and the current gray bit
     // see: https://www.geeksforgeeks.org/gray-to-binary-and-binary-to-gray-conversion/
     bin(i,j) ^= gray(i,j);
+    // if binary bit is 1 then add 2^(bit_pos) to the decimal array
+    if (bin(i,j)) decimal(i,j) += 1 << (n_bits - pos - 1);
+}
+
+__global__ void dec_array(const cv::cuda::PtrStepSzb im1, const cv::cuda::PtrStepSzb im2,
+                          cv::cuda::PtrStepb bin, cv::cuda::PtrStepi decimal, int n_bits, int pos) {
+    int j = blockIdx.x*blockDim.x + threadIdx.x;
+    int i = blockIdx.y*blockDim.y + threadIdx.y;
+    if (i >= im1.rows || j >= im1.cols) return;
+    
+    // Get graycode bit
+    uchar graybit = im1(i,j) > im2(i,j);
+
+    // Convert current gray code bit to binary bit using xor between 
+    // the previous binary bit and the current gray bit
+    // see: https://www.geeksforgeeks.org/gray-to-binary-and-binary-to-gray-conversion/
+    bin(i,j) ^= graybit;
     // if binary bit is 1 then add 2^(bit_pos) to the decimal array
     if (bin(i,j)) decimal(i,j) += 1 << (n_bits - pos - 1);
 }
