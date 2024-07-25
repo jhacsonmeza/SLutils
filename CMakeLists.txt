@@ -62,6 +62,7 @@ if(CMAKE_CUDA_COMPILER AND SLU_WITH_CUDA)
         src/fringe_analysis.cu
         src/graycoding.cu
         src/phase_graycoding.cu
+        src/multifrequency.cu
     )
     
     set(SLU_BINDINGS_SRC python/gpu_bindings.cpp)
@@ -73,6 +74,7 @@ else()
         src/graycoding.cpp
         src/phase_graycoding.cpp
         src/centerline.cpp
+        src/multifrequency.cpp
     )
     
     set(SLU_BINDINGS_SRC python/cpu_bindings.cpp)
